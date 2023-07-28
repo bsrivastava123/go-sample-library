@@ -24,29 +24,11 @@ jobs:
           with: 
             fetch-depth: 0
 
-       
-        - name : get tag
-          if: startsWith( github.ref, 'refs/heads/main' )
-          id: release_tag 
-          uses: oprypin/find-latest-tag@v1
-          with:
-             repository: ${{ github.repository }}
-             releases-only: false
-
-        - name: Determine PR
-          id: pr_tag
-          if: startsWith( github.ref, 'refs/pull/' )
-          run: echo "pr_tag=0.0.0-PR-${{ github.event.pull_request.number}}-${{ github.run_number}}" >> $GITHUB_OUTPUT
-             
-        - name: Set build number
-          id: build_number
-          run: echo "BUILD_NUMBER=${{steps.pr_tag.outputs.pr_tag ||steps.release_tag.outputs.tag}}" >> $GITHUB_OUTPUT 
-              
         - name: Package Helm Chart
           run: helm package helm/${{ inputs.chart-directory }} --destination helm-chart
 
         - name: Upload Artifact 
           uses: actions/upload-artifact@v3
           with:
-                name: ${{ inputs.chart-directory }}-chart-${{steps.build_number.outputs.BUILD_NUMBER }}-${{ inputs.version }}
+                name: ${{ inputs.chart-directory }}-chart-${{inputs.version }}
                 path: helm-chart
