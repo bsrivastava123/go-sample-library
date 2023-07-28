@@ -20,6 +20,10 @@ on:
         type: string
         default: './'
 
+    outputs:
+      version:
+        value: ${{ jobs.build.outputs.version }}
+
 jobs:
   lint:
     name: Linting
@@ -78,6 +82,8 @@ jobs:
     name: Build and upload
     runs-on: ubuntu-22.04
     needs: [ unit-test, lint ]
+    outputs:
+      version: ${{steps.build_number.outputs.BUILD_NUMBER}}
   
     steps:
       - name: Checkout repository
