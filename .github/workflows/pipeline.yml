@@ -22,7 +22,7 @@ on:
 
     outputs:
       version:
-        value: ${{ jobs.build.steps.build_number.outputs.BUILD_NUMBER }}
+        value: ${{ jobs.build.outputs.version }}
 
 jobs:
   lint:
