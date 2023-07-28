@@ -8,6 +8,11 @@ on:
         type: string
         default: ${{ github.event.repository.name }}
 
+      version:
+        required: true
+        type: string
+        default: 'undefined' 
+
 jobs:
   Helm:
     name: helm
@@ -43,5 +48,5 @@ jobs:
         - name: Upload Artifact 
           uses: actions/upload-artifact@v3
           with:
-                name: ${{ inputs.chart-directory }}-chart-${{steps.build_number.outputs.BUILD_NUMBER }}
+                name: ${{ inputs.chart-directory }}-chart-${{steps.build_number.outputs.BUILD_NUMBER }}-${{ inputs.version }}
                 path: helm-chart
