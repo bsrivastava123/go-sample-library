@@ -43,7 +43,7 @@ jobs:
       - name: run lint
         uses: golangci/golangci-lint-action@v3
         with:
-          working-directory: ${{ inputs.working-directory || 'src' }}
+          working-directory: ${{ inputs.working-directory }}
           args: --skip-dirs=gen
             
   unit-test:
@@ -60,14 +60,14 @@ jobs:
         uses: actions/setup-go@v4
         with:
           go-version: 1.x # Replace with the desired Go version
-          cache-dependency-path: ${{ inputs.working-directory || 'src' }}/go.sum
+          cache-dependency-path: ${{ inputs.working-directory }}/go.sum
   
       - name: Install dependencies
-        working-directory: ${{ inputs.working-directory || 'src' }}
+        working-directory: ${{ inputs.working-directory }}
         run: go mod download
         
       - name: Test
-        working-directory: ${{ inputs.working-directory || 'src' }}
+        working-directory: ${{ inputs.working-directory }}
         run:
           go test -v -cover ./... -json > TestResults-${{ inputs.artifact-name }}.json
        
@@ -75,7 +75,7 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: TestResults-${{ inputs.artifact-name }}.json
-          path: ${{ inputs.working-directory || 'src' }}   
+          path: ${{ inputs.working-directory }}   
            
 
   build:
@@ -95,16 +95,16 @@ jobs:
         uses: actions/setup-go@v4
         with:
           go-version: 1.x # Replace with the desired Go version
-          cache-dependency-path: ${{ inputs.working-directory || 'src' }}/go.sum
+          cache-dependency-path: ${{ inputs.working-directory }}/go.sum
 
       - name: Install dependencies
         run: go mod download
-        working-directory: ${{ inputs.working-directory || 'src' }}
+        working-directory: ${{ inputs.working-directory }}
 
       - name: Build application
         run: 
           go build -o ${{ inputs.artifact-name }} ${{ inputs.main-directory }}
-        working-directory: ${{ inputs.working-directory || 'src' }}
+        working-directory: ${{ inputs.working-directory }}
 
       - name: Determine PR
         id: pr_tag
