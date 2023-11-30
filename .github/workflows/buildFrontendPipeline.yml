@@ -3,166 +3,18 @@ name: buildFrontendPipeline
 on:
   workflow_call:
     inputs:
-      working-directory:
+      do_require:
         description: 'Directory to the folder in which the app is located.'
         required: true
         type: string
-      building-directory:
-        description: 'Directory to the folder in which the build of the app will be located'
-        required: true
-        type: string
-      customize-e2e-environment:
-        description: 'Directory to the folder in which a bash script is located to customize the e2e environment'
-        required: false
-        type: string
 
 jobs:
-  lint:
+  checkout:
     runs-on: ubuntu-22.04
     steps:
       - name: Checkout code
+        if: ${{ inputs.do_require }}
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
-      - name: Get node_modules cache
-        uses: actions/cache@v3
-        id: cacheStep
-        with:
-          path: |
-            ${{ inputs.working-directory }}/node_modules
-            ~/.cache
-            ~/.npm
-          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-node-
-      - name: Install Dependencies
-        if: steps.cacheStep.outputs.cache-hit != 'true'
-        run: npm ci
-        working-directory: ${{ inputs.working-directory }}
-      - name: lint
-        run: npm run lint
-        working-directory: ${{ inputs.working-directory }}
-
-  unit-test:
-    runs-on: ubuntu-22.04
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
-      - name: Get node_modules cache
-        id: cacheStep
-        uses: actions/cache@v3
-        with:
-          path: |
-            ${{ inputs.working-directory }}/node_modules
-            ~/.cache
-            ~/.npm
-          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-node-
-      - name: Install Dependencies
-        if: steps.cacheStep.outputs.cache-hit != 'true'
-        run: npm ci
-        working-directory: ${{ inputs.working-directory }}
-      - name: Run unit tests
-        run: npm run test
-        working-directory: ${{ inputs.working-directory }}
-      - name: Generate test report
-        uses: dorny/test-reporter@v1
-        if: success()
-        with:
-          name: Unit tests report           
-          path: ${{ inputs.working-directory }}/reports/jest-*.xml    
-          reporter: jest-junit        
-          only-summary: 'false'
-          list-suites: 'all'
-          list-tests: 'all'
-      - name: Comment the code coverage on the PR
-        uses: romeovs/lcov-reporter-action@v0.2.16
-        if: ${{ github.event_name == 'pull_request' }}
-        with:
-          lcov-file: ${{ inputs.working-directory }}/coverage/lcov.info
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-
-  build:
-    runs-on: ubuntu-22.04
-    needs: [lint, unit-test]
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
-      - name: Get node_modules cache
-        id: cacheStep
-        uses: actions/cache@v3
-        with:
-          path: |
-            ${{ inputs.working-directory }}/node_modules
-            ~/.cache
-            ~/.npm
-          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-node-
-      - name: Install Dependencies
-        if: steps.cacheStep.outputs.cache-hit != 'true'
-        run: npm ci
-        working-directory: ${{ inputs.working-directory }}
-      - name: build
-        run: npm run build
-        working-directory: ${{ inputs.working-directory }}
-      - name: Upload build artifact
-        uses: actions/upload-artifact@v3
-        with:
-          name: build-${{ inputs.working-directory }}
-          path: ${{ inputs.working-directory }}/${{ inputs.building-directory }}
-          
-  e2e:
-    runs-on: ubuntu-22.04
-    needs: [build]
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-        with:
-          fetch-depth: 0           
-      - name: Get node_modules cache
-        id: cacheStep
-        uses: actions/cache@v3
-        with:
-          path: |
-            ${{ inputs.working-directory }}/node_modules
-            ~/.cache
-            ~/.npm
-          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-node-
-      - name: Install Dependencies
-        if: steps.cacheStep.outputs.cache-hit != 'true'
-        run: npm ci
-        working-directory: ${{ inputs.working-directory }}
-      - uses: actions/download-artifact@v3
-        with:
-          name: build-${{ inputs.working-directory }}
-          path: ${{ inputs.working-directory }}/${{ inputs.building-directory }}
-      - name: Customize e2e environment run
-        if: ${{ inputs.customize-e2e-environment }}
-        run: |
-          chmod +x ${{ inputs.customize-e2e-environment }}
-          ${{ inputs.customize-e2e-environment }}
-        working-directory: ${{ inputs.working-directory }}
-      - name: Run E2E tests
-        uses: cypress-io/github-action@v5
-        with: 
-          working-directory: ${{ inputs.working-directory }}
-          install: false
-          start: npm start
-          spec: cypress/e2e/**/*
-          record: false
-          browser: chrome
-      - uses: actions/upload-artifact@v3
-        if: failure()
-        with:
-          name: cypress-screenshots
-          path: ${{ inputs.working-directory }}/cypress/screenshots
-          if-no-files-found: ignore
       
