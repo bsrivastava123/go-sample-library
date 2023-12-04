@@ -7,7 +7,6 @@ on:
         description: 'Directory to the folder in which the app is located.'
         required: true
         type: string
-
 jobs:
   checkout:
     runs-on: ubuntu-22.04
